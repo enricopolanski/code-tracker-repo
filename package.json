@@ -14,22 +14,7 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "trackeo.play",
-        "title": "Trackeo Play"
-      },
-      {
-        "command": "trackeo.pause",
-        "title": "Trackeo Pause"
-      },
-      {
-        "command": "extension.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
+  "contributes": {},
   "scripts": {
     "vscode:prepublish": "pnpm run package",
     "compile": "webpack",
