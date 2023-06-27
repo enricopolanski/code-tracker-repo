@@ -12,4 +12,4 @@ Install the dependencies
 
 `pnpm i`
 
-Run the vscode extension debugger with F5 (or check the debug tab for "Run extension command")
+Run the vscode extension debugger with F5 (or check the debug tab for `▶️ Run extension` command)
