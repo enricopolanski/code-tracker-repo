@@ -1,0 +1,6 @@
+node_modules/
+.rush
+dist
+
+# Personal todo file
+todo.md
