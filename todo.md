@@ -32,6 +32,9 @@
 
 ## Higher priority
 [ ] Add extension to our own vscode
+
+## Lower priority
+[ ] Bring back learnings to `trackeo` repo
 <!-- [ ] Check stuff about sessionid (? Unclear) -->
 
 # Learning
