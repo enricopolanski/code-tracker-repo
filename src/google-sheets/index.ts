@@ -1,5 +1,6 @@
 import { sheets_v4, Auth, google } from "googleapis";
 import * as Effect from "@effect/io/Effect";
+import { pipe } from "@effect/data/Function";
 
 const auth = new Auth.JWT({
   email: "code-tracker-repo-test@elated-badge-391113.iam.gserviceaccount.com",
@@ -22,3 +23,42 @@ type SheetsQuerySuccess = unknown;
 export const effectSheet: Effect.Effect<never, never, sheets_v4.Sheets> =
   Effect.succeed(google.sheets({ version: "v4", auth }));
 
+export const getSheetValues = (spreadsheetId: string, title: string) =>
+  pipe(
+    effectSheet,
+    Effect.flatMap((sheets: sheets_v4.Sheets) =>
+      Effect.tryCatchPromise(
+        () =>
+          sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: title,
+          }),
+        (error) => SheetsQueryError
+      )
+    )
+  );
+
+export const appendValues = (
+  values: (number | string)[][],
+  spreadsheetId: string,
+  title: string
+) =>
+  pipe(
+    effectSheet,
+    Effect.flatMap((sheets: sheets_v4.Sheets) =>
+      Effect.tryCatchPromise(
+        () =>
+          sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: title,
+            valueInputOption: "RAW",
+            requestBody: {
+              values,
+            },
+          }),
+        (error) => SheetsQueryError
+      )
+    )
+  );
+
+// TODO: utility for sheets: `A1 A2` etc notation or double array

@@ -16,23 +16,40 @@
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "Trackeo",
+      "title": "CodeTracker",
       "properties": {
-        "googlesheets.spreadsheetId": {
+        "codeTracker.googleSheets.spreadSheetId": {
           "type": [
             "string",
             null
           ],
+          "scope": "resource",
           "default": null,
-          "description": "Google Sheets spreadsheet id. You can find if in the _url_ of your google spreadsheet in the web."
+          "description": "Google Sheets spreadsheet id. You can find if in the url of your google spreadsheet in the web."
         },
-        "googlesheets.worksheetTitle": {
+        "codeTracker.googleSheets.workSheetTitle": {
           "type": [
             "string",
             null
           ],
           "default": null,
-          "description": "Google Sheets worksheet title. You can find it at the _bottom_ of your google worksheet in the web."
+          "description": "Google Sheets worksheet title. You can find it at the bottom of your google worksheet in the web."
+        },
+        "codeTracker.googleSheets.clientEmail": {
+          "type": [
+            null,
+            "string"
+          ],
+          "default": null,
+          "description": "Google Sheets clientEmail. You can find it in the google developer console or in the json that comes with it."
+        },
+        "codeTracker.googleSheets.privateKey": {
+          "type": [
+            "string",
+            null
+          ],
+          "default": null,
+          "description": "Google Sheets privateKey. You can find it in the google developer console or in the json that comes with it."
         }
       }
     }
@@ -68,6 +85,7 @@
   "dependencies": {
     "@effect/data": "~0.12.6",
     "@effect/io": "~0.26.0",
+    "@effect/schema": "^0.21.0",
     "axios": "~1.4.0",
     "googleapis": "^118.0.0"
   }

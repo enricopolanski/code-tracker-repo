@@ -6,11 +6,39 @@
 [x] If user is not idle, every 15 seconds create the output thing
 [x] Add counter with total session active time
 
+# Events
+
+[ ] Listen to other UI interactions (those should also signal that the user is currently active)
+    [ ] Check whether we can track menus opening/closing, the debugger, etc
+        [ ] Check whether we can track the user opening/closing the terminal
+        [ ] Check whether we can track the user opening/closing the explorer
+        [ ] Check whether we can track the user opening/closing the search
+        [ ] Check whether we can track the user opening/closing the source control
+        [ ] Check whether we can track the user opening/closing the extensions
+        [ ] Check whether we can track the user opening/closing the debug menu
+        [ ] Check whether we can track the user opening/closing the output
+        [ ] Check whether we can track the user opening/closing the problems
+        [ ] Check whether the user has been modifying the settings
+        [ ] Check whether the user has been modifying the theme
+        [ ] Check whether the user has been modifying the keybindings
+        [ ] Check whether the user has been modifying the extensions
+        [ ] Check whether the user has been modifying the workspace
+        [ ] Check whether the user has been modifying the window
+        [ ] Check whether the user has been modifying the file
+        [ ] Check whether the user has been modifying the search
+        [ ] Check whether the user has been modifying the scm
+        [ ] Check whether the user has been modifying the debug
+        [ ] Check whether the user has been modifying the extensions
+        [ ] Check whether the user has been modifying the view
+        [ ] Check whether the user has been modifying the help
+        [ ] Check whether the user has been modifying the editor
+
 # Saving stats
 
 ## Higher priority
 
 [ ] Send update data to Google Sheets
+    [ ] Get a first version working and commit
 
 ### Lower priority
 

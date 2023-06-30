@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { appendValues } from "./google-sheets";
+import * as Effect from "@effect/io/Effect";
 
 /**
  * Data specific to every event we track in the extension.
@@ -235,7 +237,7 @@ type ExtensionState = {
   workspaceName: string;
 };
 
-export function activate() {
+export function activate(context: vscode.ExtensionContext) {
   const now = Date.now();
 
   let stateRef: ExtensionState = {
@@ -256,6 +258,12 @@ export function activate() {
   // create the output channels that will be used to log events
   const eventOutputChannel = createOutputChannel("code-tracker");
   const statsOutputChannel = createOutputChannel("code-tracker-stats");
+  const debugOutputChannel = createOutputChannel("code-tracker-debug");
+
+  const getExtensionConfiguration = () =>
+    vscode.workspace.getConfiguration().get("codeTracker");
+
+  debugOutputChannel.appendLine(JSON.stringify(getExtensionConfiguration()));
 
   const updateState = (
     oldState: ExtensionState,
@@ -300,6 +308,30 @@ export function activate() {
     statsOutputChannel.appendLine(
       `Active Time: ${newState.activeTime} ms. Idle Time: ${newState.idleTime} ms.`
     );
+
+    // update google sheets
+    const program = appendValues(
+      [
+        [
+          "repo",
+          newState.workspaceName,
+          "activeTime",
+          Math.floor(newState.activeTime / 60000) +
+            " minutes" +
+            Math.floor((newState.activeTime % 60000) / 1000) +
+            " seconds",
+          "idleTime",
+          Math.floor(newState.idleTime / 60000) +
+            " minutes" +
+            Math.floor((newState.idleTime % 60000) / 1000) +
+            " seconds",
+        ],
+      ],
+      "11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0",
+      "Extension"
+    );
+
+    Effect.runPromise(program);
 
     stateRef = newState;
 
