@@ -37,8 +37,19 @@
 
 ## Higher priority
 
-[ ] Send update data to Google Sheets
-    [ ] Get a first version working and commit
+[ ] Create debug mode
+    [ ] In debug mode the data of a google worksheet is reset all time
+    [ ] Bonus, maybe create a new worksheet for each debug session ?
+    [ ] Include in settings whether we are in debug mode
+
+[x] Send update data to Google Sheets
+    [x] Get a first version working and commit
+    [ ] Make it an update per sesssion - workspace values
+    [ ] Include last track time in Italian time
+
+## Lower priority
+[ ] Include more in event stats
+    [ ] 
 
 ### Lower priority
 
