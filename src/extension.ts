@@ -2,7 +2,9 @@ import * as vscode from "vscode";
 import { appendValues } from "./google-sheets";
 import * as Effect from "@effect/io/Effect";
 import { pipe } from "@effect/data/Function";
-import * as Either from "@effect/data/Either";
+import * as S from "@effect/schema/Schema";
+import * as E from "@effect/data/Either";
+import { V4MAPPED } from "dns";
 
 /**
  * Data specific to every event we track in the extension.
@@ -239,7 +241,24 @@ type ExtensionState = {
   workspaceName: string;
 };
 
-export function activate(context: vscode.ExtensionContext) {
+const GoogleSheetsConfig = S.struct({
+  codeTracker: S.struct({
+    googleSheets: S.struct({
+      spreadSheetId: S.string,
+      workSheetTitle: S.string,
+      clientEmail: S.string,
+      privateKey: S.string,
+    }),
+    isDebugMode: S.boolean,
+  }),
+});
+
+type GoogleSheetsConfig = S.To<typeof GoogleSheetsConfig>;
+
+const getExtensionConfiguration = () =>
+  pipe(vscode.workspace.getConfiguration(), S.parseEither(GoogleSheetsConfig));
+
+export function activate() {
   const now = Date.now();
 
   let stateRef: ExtensionState = {
@@ -262,10 +281,20 @@ export function activate(context: vscode.ExtensionContext) {
   const statsOutputChannel = createOutputChannel("code-tracker-stats");
   const debugOutputChannel = createOutputChannel("code-tracker-debug");
 
-  const getExtensionConfiguration = () =>
-    vscode.workspace.getConfiguration().get("codeTracker");
+  const configuration = getExtensionConfiguration();
 
-  debugOutputChannel.appendLine(JSON.stringify(getExtensionConfiguration()));
+  const hasGoogleSheetsConfig = E.isRight(configuration);
+
+  if (hasGoogleSheetsConfig) {
+    debugOutputChannel.appendLine(
+      "Extension launched with Google Sheets active"
+    );
+  }
+
+  const isDebug =
+    E.isRight(configuration) && configuration.right.codeTracker.isDebugMode;
+
+  // debugOutputChannel.appendLine(JSON.stringify(getExtensionConfiguration()));
 
   const updateState = (
     oldState: ExtensionState,
@@ -312,8 +341,6 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const debugSheet = "Debug";
-
-    let isDebug: boolean = true; // TODO: Use isDebug from config
 
     // update google sheets
     const program = pipe(
@@ -363,9 +390,7 @@ export function activate(context: vscode.ExtensionContext) {
             debugOutputChannel.appendLine(
               `\n[${localizedDate}] The API is having issues updating the following worksheet range: ${
                 e.range
-              }. 
-              Verify that the specified worksheet range is correct and the spreadsheet exists:
-              https://docs.google.com/spreadsheets/d/${"11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0"}/
+              }.\nVerify that the specified worksheet range is correct and the spreadsheet exists:\nhttps://docs.google.com/spreadsheets/d/${"11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0"}/
               `
             );
         }
@@ -373,7 +398,10 @@ export function activate(context: vscode.ExtensionContext) {
       })
     );
 
-    Effect.runPromise(program);
+    // TODO: invert the debug condition
+    if (hasGoogleSheetsConfig) {
+      Effect.runPromise(program);
+    }
 
     stateRef = newState;
 
