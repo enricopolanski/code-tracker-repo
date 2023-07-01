@@ -56,8 +56,8 @@ export const saveStatsToWorksheet = (
           formatTime(state.idleTime),
         ],
       ],
-      configuration.codeTracker.googleSheets.spreadSheetId,
-      configuration.codeTracker.googleSheets.workSheetTitle
+      
+      configuration
     ),
     Effect.catchTags({
       UnknownError: onUnknownError,
