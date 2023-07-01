@@ -67,6 +67,8 @@ export const getSheetValues = (
     )
   );
 
+// TODO: add date time to current values
+
 export const appendValues = (
   values: (number | string)[][],
   configuration: ExtensionConfiguration
