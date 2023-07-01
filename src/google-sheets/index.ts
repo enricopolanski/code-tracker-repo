@@ -9,7 +9,7 @@ const auth = new Auth.JWT({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-interface UnknownError {
+export interface UnknownError {
   _tag: "UnknownError";
   data?: unknown;
 }
@@ -19,12 +19,12 @@ type _SheetsApiResponse = { response: { data: { error: unknown } } };
 /**
  * Represents an error deriving from querying a non existing worksheet or range
  */
-interface UnparsableRangeError {
+export interface UnparsableRangeError {
   range: string;
   _tag: "UnparsableRangeError";
 }
 
-type SheetsQueryError = UnknownError | UnparsableRangeError;
+export type SheetsQueryError = UnknownError | UnparsableRangeError;
 
 const sheetsQueryError: (
   data: _SheetsApiResponse,
