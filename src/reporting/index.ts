@@ -5,6 +5,7 @@ import { pipe } from "@effect/data/Function";
 import { ExtensionState } from "../state";
 import { SessionEvent, isFileRelatedEvent } from "../events";
 import { saveStatsToWorksheet } from "../google-sheets/extension-related";
+import { get } from "http";
 
 const createOutputChannel = vscode.window.createOutputChannel;
 
@@ -80,15 +81,20 @@ export const formatTime = (ms: number): string => {
 };
 
 // TODO: Refactor this to some better code
-export const trackAndReport = (extensionState: ExtensionState) =>
+export const trackAndReport = (
+  extensionState: ExtensionState,
+  shouldUpdateStats: boolean
+): Effect.Effect<never, void, void> =>
   pipe(
     logStats(extensionState),
     Effect.flatMap(() => logEvent(extensionState.lastEvent)),
-    Effect.flatMap(() => getExtensionConfiguration),
-    Effect.flatMap((configuration) =>
-      saveStatsToWorksheet(extensionState, configuration)
+    Effect.flatMap(() =>
+      pipe(
+        getExtensionConfiguration,
+        Effect.flatMap((configuration) =>
+          saveStatsToWorksheet(extensionState, configuration)
+        )
+      )
     ),
-    Effect.catchAll((e) =>
-      e ? showErrorMessage(JSON.stringify(e)) : Effect.unit()
-    )
+    Effect.when(() => shouldUpdateStats)
   );

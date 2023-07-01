@@ -6,18 +6,26 @@ export type ExtensionState = {
   idleTime: number;
   idleCountdown: number;
   lastEvent: SessionEvent;
+  lastUpdate: number;
   timeout: NodeJS.Timeout | null;
   readonly extensionStart: number;
   readonly sessionId: string;
   readonly workspaceName: string;
 };
 
+export const shouldUpdateStats = (
+  state: ExtensionState,
+  event: SessionEvent
+): boolean => state.lastUpdate + 10000 < event.timestamp;
+
 export const updateExtensionState = (
   oldState: ExtensionState,
-  newEvent: SessionEvent
+  newEvent: SessionEvent,
+  shouldUpdate: boolean
 ): ExtensionState => ({
   ...oldState,
   lastEvent: newEvent,
+  lastUpdate: shouldUpdate ? newEvent.timestamp : oldState.lastUpdate,
   activeTime: areBothIdleEvents(oldState.lastEvent, newEvent)
     ? oldState.activeTime
     : oldState.activeTime + (newEvent.timestamp - oldState.lastEvent.timestamp),
@@ -35,6 +43,7 @@ export const initState = (time: number): ExtensionState => ({
     _tag: "StartExtension",
     timestamp: time,
   },
+  lastUpdate: 0,
   sessionId: vscode.env.sessionId,
   timeout: null,
   workspaceName:

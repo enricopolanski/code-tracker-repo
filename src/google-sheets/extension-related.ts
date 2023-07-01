@@ -50,6 +50,7 @@ export const saveStatsToWorksheet = (
     appendValues(
       [
         [
+          state.sessionId,
           state.workspaceName,
           formatTime(state.activeTime),
           formatTime(state.idleTime),
