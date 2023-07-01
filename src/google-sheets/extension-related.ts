@@ -48,7 +48,13 @@ export const saveStatsToWorksheet = (
 ): Effect.Effect<never, void, void> =>
   pipe(
     appendValues(
-      [[formatTime(state.activeTime), formatTime(state.idleTime)]],
+      [
+        [
+          state.workspaceName,
+          formatTime(state.activeTime),
+          formatTime(state.idleTime),
+        ],
+      ],
       configuration.codeTracker.googleSheets.spreadSheetId,
       configuration.codeTracker.googleSheets.workSheetTitle
     ),

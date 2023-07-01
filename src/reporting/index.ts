@@ -47,7 +47,9 @@ const logStats: (
 ) => Effect.Effect<never, never, void> = (extensionState) =>
   Effect.sync(() => {
     statsOutputChannel.appendLine(
-      `Active Time: ${extensionState.activeTime} ms. Idle Time: ${extensionState.idleTime} ms.`
+      `Active Time: ${formatTime(
+        extensionState.activeTime
+      )} ms. Idle Time: ${formatTime(extensionState.idleTime)} ms.`
     );
   });
 
