@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { appendValues } from "./google-sheets";
 import * as Effect from "@effect/io/Effect";
+import { pipe } from "@effect/data/Function";
+import * as Either from "@effect/data/Either";
 
 /**
  * Data specific to every event we track in the extension.
@@ -309,26 +311,66 @@ export function activate(context: vscode.ExtensionContext) {
       `Active Time: ${newState.activeTime} ms. Idle Time: ${newState.idleTime} ms.`
     );
 
+    const debugSheet = "Debug";
+
+    let isDebug: boolean = true; // TODO: Use isDebug from config
+
     // update google sheets
-    const program = appendValues(
-      [
+    const program = pipe(
+      appendValues(
         [
-          "repo",
-          newState.workspaceName,
-          "activeTime",
-          Math.floor(newState.activeTime / 60000) +
-            " minutes" +
-            Math.floor((newState.activeTime % 60000) / 1000) +
-            " seconds",
-          "idleTime",
-          Math.floor(newState.idleTime / 60000) +
-            " minutes" +
-            Math.floor((newState.idleTime % 60000) / 1000) +
-            " seconds",
+          [
+            "repo",
+            newState.workspaceName,
+            "activeTime",
+            Math.floor(newState.activeTime / 60000) +
+              " minutes" +
+              Math.floor((newState.activeTime % 60000) / 1000) +
+              " seconds",
+            "idleTime",
+            Math.floor(newState.idleTime / 60000) +
+              " minutes" +
+              Math.floor((newState.idleTime % 60000) / 1000) +
+              " seconds",
+          ],
         ],
-      ],
-      "11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0",
-      "Extension"
+        "11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0",
+        isDebug ? debugSheet : "Extension"
+      ),
+      Effect.catchAll((e) => {
+        // TODO: If google sheets API fails, what to do
+        const now = Date.now();
+
+        const localizedDate = new Date(now).toLocaleString("en-US", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        switch (e._tag) {
+          case "UnknownError":
+            vscode.window.showErrorMessage(
+              "Unknown Error in Code Tracker extension check output channel for more details"
+            );
+            debugOutputChannel.appendLine(JSON.stringify(e));
+            break;
+          case "UnparsableRangeError":
+            vscode.window.showErrorMessage(
+              "Google Sheets API Error, the requested range is unparsable. Check output channel for more details."
+            );
+            debugOutputChannel.appendLine(
+              `\n[${localizedDate}] The API is having issues updating the following worksheet range: ${
+                e.range
+              }. 
+              Verify that the specified worksheet range is correct and the spreadsheet exists:
+              https://docs.google.com/spreadsheets/d/${"11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0"}/
+              `
+            );
+        }
+        return Effect.succeed("test");
+      })
     );
 
     Effect.runPromise(program);

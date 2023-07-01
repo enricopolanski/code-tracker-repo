@@ -1,6 +1,7 @@
 import { sheets_v4, Auth, google } from "googleapis";
 import * as Effect from "@effect/io/Effect";
-import { pipe } from "@effect/data/Function";
+import { identity, pipe } from "@effect/data/Function";
+import { title } from "process";
 
 const auth = new Auth.JWT({
   email: "code-tracker-repo-test@elated-badge-391113.iam.gserviceaccount.com",
@@ -8,17 +9,36 @@ const auth = new Auth.JWT({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const defaultConfiguration = {
-  valueRenderOption: "FORMATTED_VALUE",
-};
+interface UnknownError {
+  _tag: "UnknownError";
+  data?: unknown;
+}
 
-const SheetsQueryError = {
-  _tag: "SheetsError",
-};
+type _SheetsApiResponse = { response: { data: { error: unknown } } };
 
-type SheetsQueryError = typeof SheetsQueryError;
+/**
+ * Represents an error deriving from querying a non existing worksheet or range
+ */
+interface UnparsableRangeError {
+  range: string;
+  _tag: "UnparsableRangeError";
+}
 
-type SheetsQuerySuccess = unknown;
+type SheetsQueryError = UnknownError | UnparsableRangeError;
+
+const sheetsQueryError: (
+  data: _SheetsApiResponse,
+  title: string
+) => SheetsQueryError = (data, title) =>
+  data
+    ? {
+        _tag: "UnparsableRangeError",
+        range: title,
+      }
+    : {
+        _tag: "UnknownError",
+        data,
+      };
 
 export const effectSheet: Effect.Effect<never, never, sheets_v4.Sheets> =
   Effect.succeed(google.sheets({ version: "v4", auth }));
@@ -33,7 +53,7 @@ export const getSheetValues = (spreadsheetId: string, title: string) =>
             spreadsheetId,
             range: title,
           }),
-        (error) => SheetsQueryError
+        (error) => sheetsQueryError(error as any, title)
       )
     )
   );
@@ -46,17 +66,46 @@ export const appendValues = (
   pipe(
     effectSheet,
     Effect.flatMap((sheets: sheets_v4.Sheets) =>
-      Effect.tryCatchPromise(
+      Effect.tryPromise(() =>
+        sheets.spreadsheets.values.append({
+          spreadsheetId,
+          range: title,
+          valueInputOption: "RAW",
+          requestBody: {
+            values,
+          },
+        })
+      )
+    ),
+    Effect.mapError((response) => sheetsQueryError(response as any, title))
+  );
+
+/**
+ * Creates a new worksheet in the given spreadsheet
+ */
+export const appendWorksheet = (spreadsheetId: string, title: string) =>
+  pipe(
+    effectSheet,
+    Effect.flatMap((sheets: sheets_v4.Sheets) =>
+      Effect.async(
         () =>
-          sheets.spreadsheets.values.append({
-            spreadsheetId,
-            range: title,
-            valueInputOption: "RAW",
-            requestBody: {
-              values,
-            },
-          }),
-        (error) => SheetsQueryError
+          sheets.spreadsheets
+            .batchUpdate({
+              spreadsheetId,
+              requestBody: {
+                requests: [
+                  {
+                    addSheet: {
+                      properties: {
+                        title,
+                      },
+                    },
+                  },
+                ],
+              },
+            })
+            .then(identity, (error) => sheetsQueryError(error as any, title))
+        // (error) => sheetsQueryError(error as any, title)
       )
     )
   );

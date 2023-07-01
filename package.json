@@ -25,7 +25,8 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Google Sheets spreadsheet id. You can find if in the url of your google spreadsheet in the web."
+          "description": "Google Sheets spreadsheet id. You can find if in the url of your google spreadsheet in the web.",
+          "markdownDescription": "Google Sheets spreadsheet id. You can find if in the url of your google spreadsheet in the web."
         },
         "codeTracker.googleSheets.workSheetTitle": {
           "type": [
@@ -33,7 +34,8 @@
             null
           ],
           "default": null,
-          "description": "Google Sheets worksheet title. You can find it at the bottom of your google worksheet in the web."
+          "description": "Google Sheets worksheet title. You can find it at the bottom of your google worksheet in the web.",
+          "markdownDescription": "Google Sheets worksheet title. You can find it at the bottom of your google worksheet in the web."
         },
         "codeTracker.googleSheets.clientEmail": {
           "type": [
@@ -41,7 +43,8 @@
             "string"
           ],
           "default": null,
-          "description": "Google Sheets clientEmail. You can find it in the google developer console or in the json that comes with it."
+          "description": "Google Sheets clientEmail. You can find it in the google developer console or in the json that comes with it.",
+          "markdownDescription": "Google Sheets clientEmail. You can find it in the google developer console or in the json that comes with it."
         },
         "codeTracker.googleSheets.privateKey": {
           "type": [
@@ -49,7 +52,14 @@
             null
           ],
           "default": null,
-          "description": "Google Sheets privateKey. You can find it in the google developer console or in the json that comes with it."
+          "description": "Google Sheets privateKey. You can find it in the google developer console or in the json that comes with it.",
+          "markdownDescription": "Google Sheets privateKey. You can find it in the google developer console or in the json that comes with it."
+        },
+        "codeTracker.isDebugMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Debug mode will clear the daily extention sheet.",
+          "markdownDescription": "Debug mode will clear the daily extention sheet."
         }
       }
     }
