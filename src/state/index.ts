@@ -34,6 +34,14 @@ export const updateExtensionState = (
     : oldState.idleTime,
 });
 
+export const getWorkspaceName: () => string = () => {
+  if (vscode.workspace.workspaceFolders?.length) {
+    return vscode.workspace.workspaceFolders[0].name;
+  } else {
+    return "UNKNOWN PROJECT";
+  }
+};
+
 export const initState = (time: number): ExtensionState => ({
   activeTime: 0,
   extensionStart: time,
@@ -47,5 +55,5 @@ export const initState = (time: number): ExtensionState => ({
   sessionId: vscode.env.sessionId,
   timeout: null,
   workspaceName:
-    vscode.workspace.workspaceFolders![0].name || "No Workspace Name",
+    getWorkspaceName()
 });

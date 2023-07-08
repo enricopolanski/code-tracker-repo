@@ -1,7 +1,5 @@
 import { pipe } from "@effect/data/Function";
-import * as Effect from "@effect/io/Effect";
 import * as S from "@effect/schema/Schema";
-import * as E from "@effect/data/Either";
 import * as vscode from "vscode";
 
 const ExtensionConfiguration = S.struct({

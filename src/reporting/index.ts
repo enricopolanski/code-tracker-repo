@@ -1,11 +1,10 @@
 import * as vscode from "vscode";
-import { ExtensionConfiguration, getExtensionConfiguration } from "../config";
+import { getExtensionConfiguration } from "../config";
 import * as Effect from "@effect/io/Effect";
 import { pipe } from "@effect/data/Function";
-import { ExtensionState } from "../state";
+import { ExtensionState, getWorkspaceName } from "../state";
 import { SessionEvent, isFileRelatedEvent } from "../events";
 import { saveStatsToWorksheet } from "../google-sheets/extension-related";
-import { get } from "http";
 
 const createOutputChannel = vscode.window.createOutputChannel;
 
@@ -29,10 +28,10 @@ const getProjectAndFileName = (path: string, workspaceName: string) => {
 
 const createFileLogMessage =
   (filepath: string) =>
-  (lastEvent: SessionEvent, workspaceName: string): string =>
-    withFile(getProjectAndFileName(filepath, workspaceName).fileName)(
-      createLogMessage(lastEvent, workspaceName)
-    );
+    (lastEvent: SessionEvent, workspaceName: string): string =>
+      withFile(getProjectAndFileName(filepath, workspaceName).fileName)(
+        createLogMessage(lastEvent, workspaceName)
+      );
 
 const getLogMessage = (
   currentEvent: SessionEvent,
@@ -46,30 +45,30 @@ const getLogMessage = (
 const logStats: (
   extensionState: ExtensionState
 ) => Effect.Effect<never, never, void> = (extensionState) =>
-  Effect.sync(() => {
-    statsOutputChannel.appendLine(
-      `Active Time: ${formatTime(
-        extensionState.activeTime
-      )} ms. Idle Time: ${formatTime(extensionState.idleTime)} ms.`
-    );
-  });
+    Effect.sync(() => {
+      statsOutputChannel.appendLine(
+        `Active Time: ${formatTime(
+          extensionState.activeTime
+        )} ms. Idle Time: ${formatTime(extensionState.idleTime)} ms.`
+      );
+    });
 
-const logEvent: (event: SessionEvent) => Effect.Effect<never, never, void> = (
-  event
+const logEvent: (event: SessionEvent, workspaceName: string) => Effect.Effect<never, never, void> = (
+  event, workspaceName
 ) =>
   Effect.sync(() => {
-    eventOutputChannel.appendLine(getLogMessage(event, event, "workspaceName"));
+    eventOutputChannel.appendLine(getLogMessage(event, event, workspaceName));
   });
 
 export const logDebug: (
   message: string
 ) => Effect.Effect<never, unknown, void> = (message) =>
-  Effect.sync(() => debugOutputChannel.appendLine(message));
+    Effect.sync(() => debugOutputChannel.appendLine(message));
 
 export const showErrorMessage: (
   message: string
 ) => Effect.Effect<never, unknown, void> = (message) =>
-  Effect.sync(() => vscode.window.showErrorMessage(message));
+    Effect.sync(() => vscode.window.showErrorMessage(message));
 
 // from ms to hh:mm:ss
 export const formatTime = (ms: number): string => {
@@ -87,12 +86,11 @@ export const trackAndReport = (
 ): Effect.Effect<never, void, void> =>
   pipe(
     logStats(extensionState),
-    Effect.flatMap(() => logEvent(extensionState.lastEvent)),
     Effect.flatMap(() =>
       pipe(
         getExtensionConfiguration,
         Effect.flatMap((configuration) =>
-          saveStatsToWorksheet(extensionState, configuration)
+          Effect.all(saveStatsToWorksheet(extensionState, configuration), logEvent(extensionState.lastEvent, getWorkspaceName()))
         )
       )
     ),
