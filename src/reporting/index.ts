@@ -62,7 +62,7 @@ const logEvent: (event: SessionEvent, workspaceName: string) => Effect.Effect<ne
 
 export const logDebug: (
   message: string
-) => Effect.Effect<never, unknown, void> = (message) =>
+) => Effect.Effect<never, never, void> = (message) =>
     Effect.sync(() => debugOutputChannel.appendLine(message));
 
 export const showErrorMessage: (
@@ -83,7 +83,7 @@ export const formatTime = (ms: number): string => {
 export const trackAndReport = (
   extensionState: ExtensionState,
   shouldUpdateStats: boolean
-): Effect.Effect<never, void, void> =>
+): Effect.Effect<never, never, void> =>
   pipe(
     logStats(extensionState),
     Effect.flatMap(() =>
@@ -91,7 +91,9 @@ export const trackAndReport = (
         getExtensionConfiguration,
         Effect.flatMap((configuration) =>
           Effect.all(saveStatsToWorksheet(extensionState, configuration), logEvent(extensionState.lastEvent, getWorkspaceName()))
-        )
+        ),
+        Effect.catchAll((e) => e ? logDebug(e._tag) : logDebug(JSON.stringify(e)))
+
       )
     ),
     Effect.when(() => shouldUpdateStats)
