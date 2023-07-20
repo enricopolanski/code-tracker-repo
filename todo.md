@@ -1,6 +1,3 @@
-[x] Create status bar that outputs active/idle time
-[ ] Verify that the extension is sending data to google docs
-
 # Events
 
 [ ] Listen to other UI interactions (those should also signal that the user is currently active)
@@ -34,17 +31,16 @@
 
 [ ] Create debug mode
     [ ] In debug mode the data of a google worksheet is reset all time
-    [ ] Bonus, maybe create a new worksheet for each debug session ?
+    [ ] Bonus, maybe create a new worksheet for each debug session?
     [ ] Include in settings whether we are in debug mode
 
 [x] Send update data to Google Sheets
-    [x] Get a first version working and commit
-    [ ] Make it an update per sesssion - workspace values
-    [ ] Include last track time in Italian time
+    [x] Make it an update per session - workspace values
+    [x] Include last track time in Italian time
 
 ## Lower priority
 [ ] Include more in event stats
-    [ ] 
+    [ ] Which files have been the user focusing on?
 
 ### Lower priority
 

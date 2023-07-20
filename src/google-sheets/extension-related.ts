@@ -1,13 +1,10 @@
 import {
-  SheetsQueryError,
   UnknownError,
   UnparsableRangeError,
   appendValues,
 } from ".";
-import * as vscode from "vscode";
 import { ExtensionConfiguration } from "../config";
 import { ExtensionState } from "../state";
-import { sheets_v4 } from "googleapis";
 import * as Effect from "@effect/io/Effect";
 import { pipe } from "@effect/data/Function";
 import { formatTime, logDebug, showErrorMessage } from "../reporting";
@@ -50,10 +47,11 @@ export const saveStatsToWorksheet = (
     appendValues(
       [
         [
-          state.sessionId,
+          new Date().toLocaleString(),
           state.workspaceName,
           formatTime(state.activeTime),
           formatTime(state.idleTime),
+          state.sessionId,
         ],
       ],
       
