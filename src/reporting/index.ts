@@ -7,11 +7,15 @@ import { SessionEvent, isFileRelatedEvent } from "../events";
 import { saveStatsToWorksheet } from "../google-sheets/extension-related";
 
 const createOutputChannel = vscode.window.createOutputChannel;
+const createStatusBarItem = vscode.window.createStatusBarItem;
 
 // create the output channels that will be used to log events
 const eventOutputChannel = createOutputChannel("code-tracker");
 const statsOutputChannel = createOutputChannel("code-tracker-stats");
 const debugOutputChannel = createOutputChannel("code-tracker-debug");
+
+// create the status bar item that will be used to show the current timer of the extension
+const statusBar = createStatusBarItem("code-tracker");
 
 const createLogMessage = (event: SessionEvent, workspaceName: string): string =>
   `EventType: ${event._tag} - workspace: ${workspaceName}\n`;
@@ -28,10 +32,10 @@ const getProjectAndFileName = (path: string, workspaceName: string) => {
 
 const createFileLogMessage =
   (filepath: string) =>
-    (lastEvent: SessionEvent, workspaceName: string): string =>
-      withFile(getProjectAndFileName(filepath, workspaceName).fileName)(
-        createLogMessage(lastEvent, workspaceName)
-      );
+  (lastEvent: SessionEvent, workspaceName: string): string =>
+    withFile(getProjectAndFileName(filepath, workspaceName).fileName)(
+      createLogMessage(lastEvent, workspaceName)
+    );
 
 const getLogMessage = (
   currentEvent: SessionEvent,
@@ -45,17 +49,28 @@ const getLogMessage = (
 const logStats: (
   extensionState: ExtensionState
 ) => Effect.Effect<never, never, void> = (extensionState) =>
-    Effect.sync(() => {
-      statsOutputChannel.appendLine(
-        `Active Time: ${formatTime(
-          extensionState.activeTime
-        )} ms. Idle Time: ${formatTime(extensionState.idleTime)} ms.`
-      );
-    });
+  Effect.sync(() => {
+    statsOutputChannel.appendLine(
+      `Active Time: ${formatTime(
+        extensionState.activeTime
+      )} ms. Idle Time: ${formatTime(extensionState.idleTime)} ms.`
+    );
+  });
 
-const logEvent: (event: SessionEvent, workspaceName: string) => Effect.Effect<never, never, void> = (
-  event, workspaceName
-) =>
+const updateStatusBar: (
+  extensionState: ExtensionState
+) => Effect.Effect<never, never, void> = (extensionState) =>
+  Effect.sync(() => {
+    statusBar.text = `▶️ ${formatTime(
+      extensionState.activeTime
+    )} || ⏸️ ${formatTime(extensionState.idleTime)}`;
+    statusBar.show();
+  });
+
+const logEvent: (
+  event: SessionEvent,
+  workspaceName: string
+) => Effect.Effect<never, never, void> = (event, workspaceName) =>
   Effect.sync(() => {
     eventOutputChannel.appendLine(getLogMessage(event, event, workspaceName));
   });
@@ -63,18 +78,21 @@ const logEvent: (event: SessionEvent, workspaceName: string) => Effect.Effect<ne
 export const logDebug: (
   message: string
 ) => Effect.Effect<never, never, void> = (message) =>
-    Effect.sync(() => debugOutputChannel.appendLine(message));
+  Effect.sync(() => debugOutputChannel.appendLine(message));
 
 export const showErrorMessage: (
   message: string
 ) => Effect.Effect<never, unknown, void> = (message) =>
-    Effect.sync(() => vscode.window.showErrorMessage(message));
+  Effect.sync(() => vscode.window.showErrorMessage(message));
+
+// given a number, returns a string with two digits
+const toDoubleDigits = (n: number): string => (n < 10 ? `0${n}` : `${n}`);
 
 // from ms to hh:mm:ss
 export const formatTime = (ms: number): string => {
-  const seconds = Math.floor((ms / 1000) % 60);
-  const minutes = Math.floor((ms / (1000 * 60)) % 60);
-  const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+  const seconds = toDoubleDigits(Math.floor((ms / 1000) % 60));
+  const minutes = toDoubleDigits(Math.floor((ms / (1000 * 60)) % 60));
+  const hours = toDoubleDigits(Math.floor((ms / (1000 * 60 * 60)) % 24));
 
   return `${hours}:${minutes}:${seconds}`;
 };
@@ -86,14 +104,19 @@ export const trackAndReport = (
 ): Effect.Effect<never, never, void> =>
   pipe(
     logStats(extensionState),
+    Effect.flatMap(() => updateStatusBar(extensionState)),
     Effect.flatMap(() =>
       pipe(
         getExtensionConfiguration,
         Effect.flatMap((configuration) =>
-          Effect.all(saveStatsToWorksheet(extensionState, configuration), logEvent(extensionState.lastEvent, getWorkspaceName()))
+          Effect.all(
+            saveStatsToWorksheet(extensionState, configuration),
+            logEvent(extensionState.lastEvent, getWorkspaceName())
+          )
         ),
-        Effect.catchAll((e) => e ? logDebug(e._tag) : logDebug(JSON.stringify(e)))
-
+        Effect.catchAll((e) =>
+          e ? logDebug(e._tag) : logDebug(JSON.stringify(e))
+        )
       )
     ),
     Effect.when(() => shouldUpdateStats)

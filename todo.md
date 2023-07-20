@@ -1,10 +1,5 @@
-[x] Activate extension at startup
-[x] Create status bar to play/pause activity tracking
-[x] Understand how to create Output channel
-[x] Afk tracker: after x seconds of inactivity put state in afk
-[x] After coming back from AFK the system is no longer idle
-[x] If user is not idle, every 15 seconds create the output thing
-[x] Add counter with total session active time
+[x] Create status bar that outputs active/idle time
+[ ] Verify that the extension is sending data to google docs
 
 # Events
 
