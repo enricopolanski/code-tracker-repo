@@ -30,6 +30,12 @@
 ## Higher priority
 
 [ ] Create debug mode
+    [ ] What does debug mode do?
+        [ ] Debug mode should send data to a debug worksheet
+        [ ] User should be able to delete the debug worksheet knowing he doesn't lose any data
+        [ ] Debug worksheets should have a name that clearly explains they are debug related
+    [ ] Find how to setup a debug mode
+        [ ] Find where would this setting fit in the extension main file
     [ ] In debug mode the data of a google worksheet is reset all time
     [ ] Bonus, maybe create a new worksheet for each debug session?
     [ ] Include in settings whether we are in debug mode
@@ -37,6 +43,7 @@
 [x] Send update data to Google Sheets
     [x] Make it an update per session - workspace values
     [x] Include last track time in Italian time
+    [ ] Create the file that will contain the data on Google Drive
 
 ## Lower priority
 [ ] Include more in event stats
