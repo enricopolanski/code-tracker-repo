@@ -31,14 +31,35 @@ export function activate() {
   }
 
   addEditorEventListeners({
-    activeTextEditorChanged: onEvent,
-    onFocus: onEvent,
+    onActiveTextEditorChanged: onEvent,
+    onActiveTerminalChange: onEvent,
+    onBreakpointsChanged: onEvent,
+    onColorThemeChanged: onEvent,
+    onConfigurationChange: onEvent,
+    onDebugSessionStarted: onEvent,
+    onDebugSessionTerminated: onEvent,
+    onDidGrantWorkspaceTrust: onEvent,
+    onExtensionsChanged: onEvent,
     onFileClosed: onEvent,
     onFileCreated: onEvent,
     onFileDeleted: onEvent,
-    onFileEdit: onEvent,
+    onFileEdited: onEvent,
     onFileSaved: onEvent,
     onFileOpened: onEvent,
+    onFileRenamed: onEvent,
+    onFocus: onEvent,
+    onNotebookDocumentChanged: onEvent,
+    onNotebookDocumentClosed: onEvent,
+    onNotebookDocumentOpened: onEvent,
+    onNotebookDocumentSaved: onEvent,
+    onNotebookEditorSelectionChanged: onEvent,
+    onNotebookEditorVisibleRangesChanged: onEvent,
+    onTaskStart: onEvent,
+    onTelemetrySettingsChanged: onEvent,
+    onTerminalClosed: onEvent,
+    onTerminalOpened: onEvent,
+    onVisibleNotebookEditorsChanged: onEvent,
+    onWorkspaceFoldersChange: onEvent,
   });
 
   onEvent({ _tag: "StartExtension", timestamp: now });
