@@ -177,7 +177,6 @@ export type SessionEvent =
   | TerminalOpenedEvent
   | TerminalClosedEvent
   | ActiveTerminalChangedEvent
-  | TextEditorVisibleRangesChangedEvent
   | ColorThemeChangedEvent
   | ConfigurationChangedEvent
   | WorkspaceFoldersChangedEvent
@@ -572,7 +571,6 @@ type ActiveEvent =
   | TerminalOpenedEvent
   | TerminalClosedEvent
   | ActiveTerminalChangedEvent
-  | TextEditorVisibleRangesChangedEvent
   | ColorThemeChangedEvent
   | ConfigurationChangedEvent
   | WorkspaceFoldersChangedEvent
@@ -607,7 +605,6 @@ export const isActiveEvent = (event: SessionEvent): event is ActiveEvent =>
   event._tag === "TerminalOpened" ||
   event._tag === "TerminalClosed" ||
   event._tag === "ActiveTerminalChanged" ||
-  event._tag === "TextEditorVisibleRangesChanged" ||
   event._tag === "ColorThemeChanged" ||
   event._tag === "ConfigurationChanged" ||
   event._tag === "WorkspaceFoldersChanged" ||
