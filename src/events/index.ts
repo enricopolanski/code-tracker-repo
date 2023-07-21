@@ -1,4 +1,3 @@
-import { not } from "@effect/data/Predicate";
 import * as vscode from "vscode";
 
 /*

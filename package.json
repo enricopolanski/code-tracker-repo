@@ -4,6 +4,7 @@
   "publisher": "enricopolanski",
   "description": "Track time spent in vsc",
   "version": "0.0.1",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.79.0"
   },
@@ -70,6 +71,7 @@
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
+    "vscep": "vsce package",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
@@ -95,6 +97,7 @@
     "@effect/data": "~0.12.10",
     "@effect/io": "~0.27.2",
     "@effect/schema": "^0.21.1",
+    "@vscode/vsce": "^2.19.0",
     "axios": "~1.4.0",
     "googleapis": "^120.0.0",
     "typescript": "5.1.6"
