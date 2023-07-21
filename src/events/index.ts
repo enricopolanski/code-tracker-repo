@@ -53,6 +53,14 @@ interface FileEvent extends EventInfo {
 }
 
 /**
+ * Triggered when the user changes the active text editor.
+ */
+type ActiveTextEditorChangedEvent = EventInfo &
+  FileEvent & { _tag: "ActiveTextEditorChanged" };
+
+type FileClosedEvent = EventInfo & FileEvent & { _tag: "FileClosed" };
+
+/**
  * Triggered when the user creates a new file.
  */
 type FileCreatedEvent = EventInfo & FileEvent & { _tag: "FileCreated" };
@@ -63,9 +71,14 @@ type FileCreatedEvent = EventInfo & FileEvent & { _tag: "FileCreated" };
 type FileDeletedEvent = EventInfo & FileEvent & { _tag: "FileDeleted" };
 
 /**
- * Triggered when the user focuses a different file.
+ * Triggered when the user edits a file
  */
-type FileFocusedEvent = EventInfo & FileEvent & { _tag: "FileFocusedEvent" };
+type FileEditedEvent = EventInfo & FileEvent & { _tag: "FileEdited" };
+
+/**
+ * Triggered when the user opens a file.
+ */
+type FileOpenedEvent = EventInfo & FileEvent & { _tag: "FileOpened" };
 
 /**
  * Triggered when the user saves a file.
@@ -75,25 +88,32 @@ type FileSavedEvent = EventInfo & FileEvent & { _tag: "FileSaved" };
 /**
  * Triggered when the extension is started
  */
-type StartExtension = EventInfo & { _tag: "StartExtension" };
 
 export const isFileRelatedEvent = (
   event: SessionEvent
 ): event is
   | FileCreatedEvent
   | FileDeletedEvent
-  | FileFocusedEvent
+  | FileEditedEvent
+  | FileClosedEvent
+  | FileOpenedEvent
+  | ActiveTextEditorChangedEvent
   | FileSavedEvent => "path" in event;
 
+type StartExtension = EventInfo & { _tag: "StartExtension" };
+
 export type SessionEvent =
-  | StartExtension
+  | ActiveTextEditorChangedEvent
+  | FileClosedEvent
+  | FileCreatedEvent
+  | FileEditedEvent
+  | FileDeletedEvent
+  | FileOpenedEvent
+  | FileSavedEvent
   | FocusOnEvent
   | FocusOffEvent
-  | TimeoutEvent
-  | FileCreatedEvent
-  | FileDeletedEvent
-  | FileSavedEvent
-  | FileFocusedEvent;
+  | StartExtension
+  | TimeoutEvent;
 
 export const createTimeout: (
   callback: (event: TimeoutEvent) => void,
@@ -109,22 +129,28 @@ export const createTimeout: (
  */
 type VSCodeListenersMap = {
   // includes both on and off events
+  activeTextEditorChanged: (type: ActiveTextEditorChangedEvent) => void;
   onFocus: (type: FocusOnEvent | FocusOffEvent) => void;
   onFileCreated: (type: FileCreatedEvent) => void;
   onFileDeleted: (type: FileDeletedEvent) => void;
   onFileSaved: (type: FileSavedEvent) => void;
-  onFileFocusChange: (type: FileFocusedEvent) => void;
+  onFileEdit: (type: FileEditedEvent) => void;
+  onFileClosed: (type: FileClosedEvent) => void;
+  onFileOpened: (type: FileOpenedEvent) => void;
 };
 
 export const addEditorEventListeners = (
   callbacksMap: Partial<VSCodeListenersMap>
 ): void => {
   const {
+    activeTextEditorChanged,
     onFocus,
+    onFileClosed,
     onFileCreated,
     onFileDeleted,
+    onFileEdit,
+    onFileOpened,
     onFileSaved,
-    onFileFocusChange,
   } = callbacksMap;
   if (onFocus) {
     vscode.window.onDidChangeWindowState((e) => {
@@ -170,24 +196,60 @@ export const addEditorEventListeners = (
     });
   }
 
-  if (onFileFocusChange) {
+  if (onFileEdit) {
     vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.scheme === "file") {
-        onFileFocusChange({
-          _tag: "FileFocusedEvent",
+        onFileEdit({
+          _tag: "FileEdited",
           timestamp: Date.now(),
           path: e.document.fileName,
         });
       }
     });
   }
+
+  if (onFileClosed) {
+    vscode.workspace.onDidCloseTextDocument((e) => {
+      onFileClosed({
+        _tag: "FileClosed",
+        timestamp: Date.now(),
+        path: e.fileName,
+      });
+    });
+  }
+
+  if (onFileOpened) {
+    vscode.workspace.onDidOpenTextDocument((e) => {
+      onFileOpened({
+        _tag: "FileOpened",
+        timestamp: Date.now(),
+        path: e.fileName,
+      });
+    });
+  }
+
+  if (activeTextEditorChanged) {
+    vscode.window.onDidChangeActiveTextEditor((e) => {
+      activeTextEditorChanged({
+        _tag: "ActiveTextEditorChanged",
+        timestamp: Date.now(),
+        path: (e && e.document.fileName) || "UnknownFile",
+      });
+    });
+  }
+
+  // listens to changes in the currently focused file
+  // vscode.window.onDidChangeActiveTextEditor((e) => {
 };
 
 type ActiveEvent =
+  | ActiveTextEditorChangedEvent
   | FileCreatedEvent
   | FileDeletedEvent
+  | FileEditedEvent
+  | FileOpenedEvent
   | FileSavedEvent
-  | FileFocusedEvent
+  | FileClosedEvent
   | StartExtension
   | FocusOnEvent;
 
@@ -197,8 +259,11 @@ export const isActiveEvent = (event: SessionEvent): event is ActiveEvent =>
   event._tag === "FileCreated" ||
   event._tag === "FileDeleted" ||
   event._tag === "FileSaved" ||
-  event._tag === "FileFocusedEvent" ||
+  event._tag === "FileEdited" ||
+  event._tag === "FileClosed" ||
   event._tag === "StartExtension" ||
+  event._tag === "FileOpened" ||
+  event._tag === "ActiveTextEditorChanged" ||
   event._tag === "FocusOn";
 
 export const isIdleEvent = (event: SessionEvent): event is IdleEvent =>

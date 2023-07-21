@@ -103,21 +103,23 @@ export const trackAndReport = (
   shouldUpdateStats: boolean
 ): Effect.Effect<never, never, void> =>
   pipe(
-    logStats(extensionState),
+    logEvent(extensionState.lastEvent, getWorkspaceName()),
     Effect.flatMap(() => updateStatusBar(extensionState)),
     Effect.flatMap(() =>
       pipe(
         getExtensionConfiguration,
         Effect.flatMap((configuration) =>
-          Effect.all(
-            saveStatsToWorksheet(extensionState, configuration),
-            logEvent(extensionState.lastEvent, getWorkspaceName())
+          pipe(
+            Effect.all(
+              saveStatsToWorksheet(extensionState, configuration),
+              logStats(extensionState)
+            ),
+            Effect.when(() => shouldUpdateStats)
           )
         ),
         Effect.catchAll((e) =>
           e ? logDebug(e._tag) : logDebug(JSON.stringify(e))
         )
       )
-    ),
-    Effect.when(() => shouldUpdateStats)
+    )
   );

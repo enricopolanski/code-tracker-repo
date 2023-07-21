@@ -31,11 +31,14 @@ export function activate() {
   }
 
   addEditorEventListeners({
+    activeTextEditorChanged: onEvent,
     onFocus: onEvent,
+    onFileClosed: onEvent,
     onFileCreated: onEvent,
     onFileDeleted: onEvent,
+    onFileEdit: onEvent,
     onFileSaved: onEvent,
-    onFileFocusChange: onEvent,
+    onFileOpened: onEvent,
   });
 
   onEvent({ _tag: "StartExtension", timestamp: now });
