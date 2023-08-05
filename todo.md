@@ -2,6 +2,7 @@
 
 ## Higher priority
 
+[ ] Don't create a new row for each stat update. Instead add/update a single row that shares the same session and workspace name
 [ ] Create debug mode
 [ ] What does debug mode do?
 [ ] Debug mode should send data to a debug worksheet
