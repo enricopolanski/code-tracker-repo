@@ -2,15 +2,15 @@
 Write a script that updates a worksheet with specific data:
 [x] Create a new worksheet in Google Sheet for testing
 [x] Share it so that it can be accessed by the service account
-[ ] Create a function that creates a random id
-[ ] Create a function that searches for the cell/row with that id
+[x] Create a function that creates a random id
+[x] Create a function that searches for the cell/row with that id
 [ ] Create a function that create a new row if no row with that id is found
 [ ] Create a function that updates the row with the new data if a row with that id is found
 [ ] Update our current code to update rather than append
 */
 
 import * as Effect from "@effect/io/Effect";
-import { getSheetValues } from ".";
+import { appendValues, getSheetValues, updateValues } from ".";
 import { pipe } from "@effect/data/Function";
 import * as O from "@effect/data/Option";
 
@@ -28,7 +28,7 @@ export const randomId = () => Math.random().toString(36).substring(7);
 const _config = {
   codeTracker: {
     googleSheets: {
-      workSheetTitle: "paper15",
+      workSheetTitle: "paper1",
       spreadSheetId,
       clientEmail: configuration.clientEmail,
       privateKey: configuration.privateKey,
@@ -41,12 +41,19 @@ export const findRowByValue =
   (value: string) =>
   (rows: string[][]): O.Option<number> =>
     rows.findIndex((row) => row.includes(value)) > -1
-      ? O.some(rows.findIndex((row) => row[0] === value))
+      ? O.some(rows.findIndex((row) => row[0] === value) + 1)
       : O.none();
 
 const program = pipe(
-  getSheetValues("paper10", _config)
-  //   Effect.map((sheets) => sheets)
+  getSheetValues(_config),
+  Effect.flatMap((values) => findRowByValue("test1")(values)),
+  Effect.flatMap((row) =>
+    updateValues(row, [["test2", "test2", "test2"]], _config)
+  ),
+  Effect.catchTag("NoSuchElementException", () =>
+    appendValues([["test2"]], _config)
+  )
 );
+//   Effect.map((sheets) => sheets)
 
-Effect.runPromise(program).then(console.log);
+Effect.runPromise(program); //?

@@ -47,7 +47,16 @@ const invalidArgumentError = (data: InvalidArgument): InvalidArgumentError => ({
   data,
 });
 
-export type SheetsQueryError = UnknownError | InvalidArgumentError;
+const noValuesError = {
+  _tag: "NoValuesError",
+} as const;
+
+type NoValuesError = typeof noValuesError;
+
+export type SheetsQueryError =
+  | UnknownError
+  | InvalidArgumentError
+  | NoValuesError;
 
 export const effectSheet: (
   configuration: ExtensionConfiguration
@@ -64,9 +73,8 @@ export const effectSheet: (
   );
 
 export const getSheetValues = (
-  range: string,
   configuration: ExtensionConfiguration
-): Effect.Effect<never, SheetsQueryError, sheets_v4.Schema$ValueRange> =>
+): Effect.Effect<never, SheetsQueryError, any[][]> =>
   pipe(
     effectSheet(configuration),
     Effect.flatMap((sheets: sheets_v4.Sheets) =>
@@ -74,23 +82,23 @@ export const getSheetValues = (
         () =>
           sheets.spreadsheets.values.get({
             spreadsheetId: configuration.codeTracker.googleSheets.spreadSheetId,
-            range,
+            range: configuration.codeTracker.googleSheets.workSheetTitle,
           }),
-        // (error) =>
-        identity
+        (e) =>
+          pipe(
+            S.parseOption(InvalidArgument)(e),
+            O.match(() => unknownError(e), invalidArgumentError)
+          )
       )
     ),
-    Effect.map((res) => res.data),
-    Effect.mapError((e) =>
-      pipe(
-        S.parseOption(InvalidArgument)(e),
-        O.match(() => unknownError(e), invalidArgumentError)
-      )
+    Effect.flatMap((res) =>
+      res.data.values
+        ? Effect.succeed(res.data.values)
+        : Effect.fail(noValuesError)
     )
   );
 
 // TODO: add date time to current values
-
 export const appendValues = (
   values: (number | string)[][],
   configuration: ExtensionConfiguration
@@ -109,42 +117,65 @@ export const appendValues = (
         })
       )
     ),
-    Effect.mapError((response) =>
-      unknownError(
-        response
-        // configuration.codeTracker.googleSheets.workSheetTitle
-      )
-    )
+    Effect.mapError((response) => unknownError(response))
   );
 
-/**
- * Creates a new worksheet in the given spreadsheet
- */
-export const appendWorksheet = (
-  spreadsheetId: string,
-  title: string,
+export const updateValues = (
+  row: number,
+  values: (number | string)[][],
   configuration: ExtensionConfiguration
-) =>
+): Effect.Effect<
+  never,
+  SheetsQueryError,
+  sheets_v4.Schema$UpdateValuesResponse
+> =>
   pipe(
     effectSheet(configuration),
     Effect.flatMap((sheets: sheets_v4.Sheets) =>
-      Effect.async(() =>
-        sheets.spreadsheets
-          .batchUpdate({
-            spreadsheetId,
-            requestBody: {
-              requests: [
-                {
-                  addSheet: {
-                    properties: {
-                      title,
-                    },
-                  },
-                },
-              ],
-            },
-          })
-          .then(identity, unknownError)
+      Effect.tryPromise(() =>
+        sheets.spreadsheets.values.update({
+          spreadsheetId: configuration.codeTracker.googleSheets.spreadSheetId,
+          range: `${configuration.codeTracker.googleSheets.workSheetTitle}!A${row}`,
+          valueInputOption: "RAW",
+          requestBody: {
+            values,
+          },
+        })
       )
-    )
+    ),
+    Effect.map((res) => res.data),
+    Effect.mapError((response) => unknownError(response))
   );
+
+// TODO: Does this even work?
+/**
+ * Creates a new worksheet in the given spreadsheet
+ */
+// export const appendWorksheet = (
+//   spreadsheetId: string,
+//   title: string,
+//   configuration: ExtensionConfiguration
+// ) =>
+//   pipe(
+//     effectSheet(configuration),
+//     Effect.flatMap((sheets: sheets_v4.Sheets) =>
+//       Effect.async(() =>
+//         sheets.spreadsheets
+//           .batchUpdate({
+//             spreadsheetId,
+//             requestBody: {
+//               requests: [
+//                 {
+//                   addSheet: {
+//                     properties: {
+//                       title,
+//                     },
+//                   },
+//                 },
+//               ],
+//             },
+//           })
+//           .then(identity, unknownError)
+//       )
+//     )
+//   );
