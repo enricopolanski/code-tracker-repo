@@ -1,14 +1,19 @@
 import { sheets_v4, Auth, google } from "googleapis";
 import * as Effect from "@effect/io/Effect";
 import { identity, pipe } from "@effect/data/Function";
+import * as O from "@effect/data/Option";
 import { ExtensionConfiguration } from "../config";
+import * as S from "@effect/schema/Schema";
 
 export interface UnknownError {
   _tag: "UnknownError";
   data?: unknown;
 }
 
-type _SheetsApiResponse = { response: { data: { error: unknown } } };
+const unknownError: (data?: unknown) => UnknownError = (data) => ({
+  _tag: "UnknownError",
+  data,
+});
 
 /**
  * Represents an error deriving from querying a non existing worksheet or range
@@ -16,23 +21,33 @@ type _SheetsApiResponse = { response: { data: { error: unknown } } };
 export interface UnparsableRangeError {
   range: string;
   _tag: "UnparsableRangeError";
+  data: unknown;
 }
 
-export type SheetsQueryError = UnknownError | UnparsableRangeError;
+const InvalidArgument = S.struct({
+  response: S.struct({
+    data: S.struct({
+      error: S.struct({
+        code: S.literal(400),
+        status: S.literal("INVALID_ARGUMENT"),
+      }),
+    }),
+  }),
+});
 
-const sheetsQueryError: (
-  data: _SheetsApiResponse,
-  title: string
-) => SheetsQueryError = (data, title) =>
-  data
-    ? {
-        _tag: "UnparsableRangeError",
-        range: title,
-      }
-    : {
-        _tag: "UnknownError",
-        data,
-      };
+type InvalidArgument = S.To<typeof InvalidArgument>;
+
+type InvalidArgumentError = {
+  _tag: "InvalidArgumentError";
+  data: InvalidArgument;
+};
+
+const invalidArgumentError = (data: InvalidArgument): InvalidArgumentError => ({
+  _tag: "InvalidArgumentError",
+  data,
+});
+
+export type SheetsQueryError = UnknownError | InvalidArgumentError;
 
 export const effectSheet: (
   configuration: ExtensionConfiguration
@@ -49,20 +64,27 @@ export const effectSheet: (
   );
 
 export const getSheetValues = (
-  spreadsheetId: string,
-  title: string,
+  range: string,
   configuration: ExtensionConfiguration
-) =>
+): Effect.Effect<never, SheetsQueryError, sheets_v4.Schema$ValueRange> =>
   pipe(
     effectSheet(configuration),
     Effect.flatMap((sheets: sheets_v4.Sheets) =>
       Effect.tryCatchPromise(
         () =>
           sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: title,
+            spreadsheetId: configuration.codeTracker.googleSheets.spreadSheetId,
+            range,
           }),
-        (error) => sheetsQueryError(error as any, title)
+        // (error) =>
+        identity
+      )
+    ),
+    Effect.map((res) => res.data),
+    Effect.mapError((e) =>
+      pipe(
+        S.parseOption(InvalidArgument)(e),
+        O.match(() => unknownError(e), invalidArgumentError)
       )
     )
   );
@@ -88,9 +110,9 @@ export const appendValues = (
       )
     ),
     Effect.mapError((response) =>
-      sheetsQueryError(
-        response as any,
-        configuration.codeTracker.googleSheets.workSheetTitle
+      unknownError(
+        response
+        // configuration.codeTracker.googleSheets.workSheetTitle
       )
     )
   );
@@ -106,27 +128,23 @@ export const appendWorksheet = (
   pipe(
     effectSheet(configuration),
     Effect.flatMap((sheets: sheets_v4.Sheets) =>
-      Effect.async(
-        () =>
-          sheets.spreadsheets
-            .batchUpdate({
-              spreadsheetId,
-              requestBody: {
-                requests: [
-                  {
-                    addSheet: {
-                      properties: {
-                        title,
-                      },
+      Effect.async(() =>
+        sheets.spreadsheets
+          .batchUpdate({
+            spreadsheetId,
+            requestBody: {
+              requests: [
+                {
+                  addSheet: {
+                    properties: {
+                      title,
                     },
                   },
-                ],
-              },
-            })
-            .then(identity, (error) => sheetsQueryError(error as any, title))
-        // (error) => sheetsQueryError(error as any, title)
+                },
+              ],
+            },
+          })
+          .then(identity, unknownError)
       )
     )
   );
-
-// TODO: utility for sheets: `A1 A2` etc notation or double array

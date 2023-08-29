@@ -14,7 +14,7 @@ export function activate() {
   function onEvent(event: SessionEvent): void {
     // Should we update the remote stats?
     const msSinceLastUpdate = event.timestamp - stateRef.lastUpdate;
-    const shouldUpdateRemoteStats = msSinceLastUpdate > stateRef.idleCountdown;
+    const shouldUpdateRemoteStats = msSinceLastUpdate > 60000;
 
     // 1. Clear the pending timeout, if any.
     if (stateRef.timeout) {

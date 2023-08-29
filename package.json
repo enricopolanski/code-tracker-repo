@@ -99,6 +99,7 @@
     "@effect/schema": "^0.21.1",
     "@vscode/vsce": "^2.19.0",
     "axios": "~1.4.0",
+    "effect": "^2.0.0-next.29",
     "googleapis": "^120.0.0",
     "typescript": "5.1.6"
   }
