@@ -49,6 +49,18 @@ export const findRowByValue =
       ? O.some(rows.findIndex((row) => row.includes(value)) + 1)
       : O.none();
 
+const computeStats = (state: ExtensionState) => [
+  new Date().toLocaleString("it-IT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }),
+  state.workspaceName,
+  Math.floor(state.activeTime / 1000),
+  Math.floor(state.idleTime / 1000),
+  state.sessionId,
+];
+
 export const saveStatsToWorksheet = (
   state: ExtensionState,
   configuration: ExtensionConfiguration
@@ -57,42 +69,11 @@ export const saveStatsToWorksheet = (
     getSheetValues(configuration),
     Effect.flatMap((values) => findRowByValue(state.sessionId)(values)),
     Effect.flatMap((rowNumber) =>
-      updateValues(
-        rowNumber,
-        [
-          [
-            new Date().toLocaleString("it-IT", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            }),
-            state.workspaceName,
-            state.activeTime,
-            state.idleTime,
-            state.sessionId,
-          ],
-        ],
-        configuration
-      )
+      updateValues(rowNumber, [computeStats(state)], configuration)
     ),
     Effect.catchTags({
       NoSuchElementException: () =>
-        appendValues(
-          [
-            [
-              new Date().toLocaleString("it-IT", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }),
-              state.workspaceName,
-              formatTime(state.activeTime),
-              formatTime(state.idleTime),
-              state.sessionId,
-            ],
-          ],
-          configuration
-        ),
+        appendValues([computeStats(state)], configuration),
       UnknownError: onUnknownError,
       UnparsableRangeError: onUnparsableRangeError(state, configuration),
     })
