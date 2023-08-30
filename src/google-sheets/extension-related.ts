@@ -46,7 +46,7 @@ export const findRowByValue =
   (value: string) =>
   (rows: string[][]): O.Option<number> =>
     rows.findIndex((row) => row.includes(value)) > -1
-      ? O.some(rows.findIndex((row) => row[0] === value) + 1)
+      ? O.some(rows.findIndex((row) => row.includes(value)) + 1)
       : O.none();
 
 export const saveStatsToWorksheet = (
@@ -61,7 +61,11 @@ export const saveStatsToWorksheet = (
         rowNumber,
         [
           [
-            new Date().toLocaleString(),
+            new Date().toLocaleString("it-IT", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }),
             state.workspaceName,
             formatTime(state.activeTime),
             formatTime(state.idleTime),
@@ -76,7 +80,11 @@ export const saveStatsToWorksheet = (
         appendValues(
           [
             [
-              new Date().toLocaleString(),
+              new Date().toLocaleString("it-IT", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              }),
               state.workspaceName,
               formatTime(state.activeTime),
               formatTime(state.idleTime),
