@@ -1,8 +1,19 @@
 # Saving stats
 
-## Higher priority
+## High Priority
 
-[ ] Don't create a new row for each stat update. Instead add/update a single row that shares the same session and workspace name
+Compute stats
+
+[ ] Get all values from "Extension" sheet
+    [ ] For each day return:
+        [ ] The day
+        [ ] Total Active Time
+        [ ] Total Idle Time
+
+
+## Mid priority
+
+[x] Don't create a new row for each stat update. Instead add/update a single row that shares the same session and workspace name
 [ ] Create debug mode
 [ ] What does debug mode do?
 [ ] Debug mode should send data to a debug worksheet
@@ -60,14 +71,6 @@
 [x] Check whether we can track the user opening/closing terminal windows
 [x] Check whether the user has been modifying the file
 [x] Check whether we can track menus opening/closing
-TODO: Seems not possible
-[ ] Check whether we can track the user opening/closing the explorer
-[ ] Check whether we can track the user opening/closing the search
-[ ] Check whether we can track the user opening/closing the source control
-[ ] Check whether we can track the user opening/closing the extensions
-[ ] Check whether we can track the user opening/closing the debug menu
-[ ] Check whether we can track the user opening/closing the output
-[ ] Check whether we can track the user opening/closing the problems
 [x] Check whether the user has been modifying the settings
 [x] Check whether the user has been modifying the theme
 [x] Check whether the user has been modifying the extensions

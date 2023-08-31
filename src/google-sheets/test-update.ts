@@ -1,4 +1,4 @@
-/* 
+/*
 Write a script that updates a worksheet with specific data:
 [x] Create a new worksheet in Google Sheet for testing
 [x] Share it so that it can be accessed by the service account
@@ -13,8 +13,9 @@ import * as Effect from "@effect/io/Effect";
 import { appendValues, getSheetValues, updateValues } from ".";
 import { pipe } from "@effect/data/Function";
 import * as O from "@effect/data/Option";
+import * as S from "@effect/schema/Schema";
 
-const spreadSheetId = "1qRoFn5Tsh4eDHf6-93EOh_JUFGerGl0iWwM7yvoF-FA";
+const spreadSheetId = "11PMsjz9HTO1Nw6xGm_TjGcUC_8LnkPYQpq7yc-j26R0";
 
 const configuration = {
   clientEmail:
@@ -28,7 +29,7 @@ export const randomId = () => Math.random().toString(36).substring(7);
 const _config = {
   codeTracker: {
     googleSheets: {
-      workSheetTitle: "paper1",
+      workSheetTitle: "Extension",
       spreadSheetId,
       clientEmail: configuration.clientEmail,
       privateKey: configuration.privateKey,
@@ -44,16 +45,106 @@ export const findRowByValue =
       ? O.some(rows.findIndex((row) => row[0] === value) + 1)
       : O.none();
 
+//   Effect.map((sheets) => sheets)
+
+// Effect.runPromise(program); //?
+
+const Row = S.tuple(S.string, S.string, S.number, S.number, S.string);
+
+type Row = S.To<typeof Row>;
+
+const data: Row[] = [
+  [
+    "30/08/2023",
+    "code-tracker",
+    1050,
+    4861,
+    "3d00d7ad-99b2-44bb-bacf-24dc29c117991693386646174",
+  ],
+  [
+    "30/08/2023",
+    "code-tracker",
+    720,
+    22624,
+    "8efa327c-0132-4644-bd1f-991a0cdd834c1693392580982",
+  ],
+  [
+    "30/08/2023",
+    "trackeo",
+    0,
+    0,
+    "b0d887f4-a9a4-4480-9516-c4bf5061a5b01693392769312",
+  ],
+  [
+    "31/08/2023",
+    "trackeo",
+    37,
+    30,
+    "3efcd574-f5c1-4440-aa4e-595cd5f1500f1693392855469",
+  ],
+  [
+    "30/08/2023",
+    "trackeo",
+    15,
+    111,
+    "1409a60f-ba62-4f66-b2b9-9c502827379d1693392931704",
+  ],
+  [
+    "31/08/2023",
+    "trackeo",
+    45,
+    4177,
+    "abdd269d-61ad-4edd-90dd-322f85bd1be41693408632957",
+  ],
+  [
+    "31/08/2023",
+    "trackeo",
+    2000,
+    2000,
+    "abdd269d-61ad-4edd-90dd-322f85bd1be41693408632957",
+  ],
+];
+
+interface DailyStat {
+  date: string;
+  activeTime: number;
+  idleTime: number;
+}
+
+// a function that takes an array of `Row` and returns an array of `DailyStat` grouped by date
+const groupByDate = (rows: Row[]): DailyStat[] =>
+  rows.reduce((acc, curr) => {
+    const [date, repo, activeTime, idleTime] = curr;
+    const dateIndex = acc.findIndex((item) => item.date === date);
+    if (dateIndex > -1) {
+      acc[dateIndex].activeTime += activeTime;
+      acc[dateIndex].idleTime += idleTime;
+    } else {
+      acc.push({
+        date,
+        activeTime,
+        idleTime,
+      });
+    }
+    return acc;
+  }, [] as DailyStat[]);
+
+// groupByDate(data); //?
+
+// data.reduce((acc, curr) , [])
+
 const program = pipe(
   getSheetValues(_config),
-  Effect.flatMap((values) => findRowByValue("test1")(values)),
-  Effect.flatMap((row) =>
-    updateValues(row, [["test2", "test2", "test2"]], _config)
-  ),
-  Effect.catchTag("NoSuchElementException", () =>
-    appendValues([["test2"]], _config)
-  )
+  Effect.map((rows) => rows.filter((row, index) => index > 0))
+  // Effect.map((rows) => groupByDate(rows as any))
+  // Effect.map(console.log)
+  // Effect.flatMap((values) => findRowByValue("test1")(values)),
+  // Effect.flatMap((row) =>
+  //   updateValues(row, [["test2", "test2", "test2"]], _config)
+  // ),
+  // Effect.catchTag("NoSuchElementException", () =>
+  //   appendValues([["test2"]], _config)
+  // )
 );
-//   Effect.map((sheets) => sheets)
 
 Effect.runPromise(program); //?

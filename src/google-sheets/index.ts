@@ -1,9 +1,10 @@
 import { sheets_v4, Auth, google } from "googleapis";
 import * as Effect from "@effect/io/Effect";
-import { identity, pipe } from "@effect/data/Function";
+import { pipe } from "@effect/data/Function";
 import * as O from "@effect/data/Option";
 import { ExtensionConfiguration } from "../config";
 import * as S from "@effect/schema/Schema";
+import { logDebug } from "../reporting";
 
 export interface UnknownError {
   _tag: "UnknownError";
@@ -145,6 +146,53 @@ export const updateValues = (
     ),
     Effect.map((res) => res.data),
     Effect.mapError((response) => unknownError(response))
+  );
+
+interface SetColumnFormatError {
+  _tag: "SetColumnFormatError";
+  data: unknown;
+}
+
+export const setColumnFormat = (
+  format: sheets_v4.Schema$CellFormat,
+  configuration: ExtensionConfiguration,
+  column: number
+): Effect.Effect<never, SetColumnFormatError, void> =>
+  pipe(
+    effectSheet(configuration),
+    Effect.flatMap((sheets) =>
+      Effect.tryCatchPromise(
+        () =>
+          sheets.spreadsheets.batchUpdate({
+            spreadsheetId: configuration.codeTracker.googleSheets.spreadSheetId,
+            requestBody: {
+              requests: [
+                {
+                  repeatCell: {
+                    range: {
+                      sheetId: 0,
+                      startColumnIndex: column,
+                      endColumnIndex: column,
+                      startRowIndex: 2,
+                    },
+                    cell: {
+                      userEnteredFormat: {
+                        ...format,
+                      },
+                    },
+                    fields: "userEnteredFormat.numberFormat",
+                  },
+                },
+              ],
+            },
+          }),
+        (e) => ({
+          _tag: "SetColumnFormatError" as const,
+          data: e,
+        })
+      )
+    ),
+    // Effect.flatMap((x) => logDebug(JSON.stringify(x)))
   );
 
 // TODO: Does this even work?

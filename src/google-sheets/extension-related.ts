@@ -3,6 +3,7 @@ import {
   UnparsableRangeError,
   appendValues,
   getSheetValues,
+  setColumnFormat,
   updateValues,
 } from ".";
 import { ExtensionConfiguration } from "../config";
@@ -71,10 +72,37 @@ export const saveStatsToWorksheet = (
     Effect.flatMap((rowNumber) =>
       updateValues(rowNumber, [computeStats(state)], configuration)
     ),
+    Effect.flatMap(() =>
+      setColumnFormat(
+        {
+          numberFormat: {
+            type: "DATE",
+            pattern: "DD/MM/YYYY",
+          },
+        },
+        configuration,
+        1
+      )
+    ),
     Effect.catchTags({
       NoSuchElementException: () =>
-        appendValues([computeStats(state)], configuration),
+        pipe(
+          appendValues([computeStats(state)], configuration),
+          Effect.flatMap(() =>
+            setColumnFormat(
+              {
+                numberFormat: {
+                  type: "DATE",
+                  pattern: "dd/mm/yyyy",
+                },
+              },
+              configuration,
+              0
+            )
+          )
+        ),
       UnknownError: onUnknownError,
       UnparsableRangeError: onUnparsableRangeError(state, configuration),
+      SetColumnFormatError: (e) => onUnknownError(e as any),
     })
   );
